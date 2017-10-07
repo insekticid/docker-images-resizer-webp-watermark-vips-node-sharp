@@ -1,0 +1,9 @@
+version: '2.0'
+
+services:
+    node:
+        build: .
+        volumes:
+          - ../recipe-pictures/generated:/var/data/generated
+          - ../recipe-pictures/original:/var/data/original
+          - ../recipe-pictures/watermark.png:/var/data/watermark.png

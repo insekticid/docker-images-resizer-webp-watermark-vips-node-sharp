@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "gulp": "^3.9.1",
+    "gulp-changed": "^3.1.0",
+    "gulp-debug": "^3.1.0",
+    "gulp-image-resize": "^0.13.0",
+    "gulp-watermark": "^0.0.1"
+  }
+}
