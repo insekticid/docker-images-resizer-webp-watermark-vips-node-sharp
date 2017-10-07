@@ -1,8 +1,9 @@
-FROM node:alpine
+FROM node:8-alpine
+
+RUN apk add --no-cache git graphicsmagick
 
 COPY gulpfile.js /var/data/
 COPY package.json /var/data/
-COPY watermark.png /var/data/
 
 RUN mkdir -p /var/data/ /var/data/generated/ /var/data/original/
 
@@ -12,4 +13,4 @@ WORKDIR /var/data
 
 RUN yarn install
 
-CMD ["gulp", "images:watch"]
+CMD ["gulp"]
