@@ -4,97 +4,108 @@
 var gulp = require('gulp');
 
 var imageResize = require('gulp-image-resize');
+const imagemin = require('imagemin');
+var imageminWebp = require('imagemin-webp');
 var debug = require('gulp-debug');
 var changed = require("gulp-changed");
 var watermark = require("gulp-watermark");
+var os = require('os');
+var parallel = require('concurrent-transform');
+var pipes = require('gulp-pipes');
+var webp = require('gulp-webp');
+var runSequence = require('run-sequence');
+var responsive = require('gulp-responsive');
+var rename = require("gulp-rename");
 
 // Config
 var config = {
-    source_images_path      : '/var/data/original',
-    images_path             : '/var/data/generated',
+    source_images_path      : 'original',
+    images_path             : 'generated',
     //images_upload_path      : 'web/uploads'
 };
-//
-// Images
-gulp.task('images', function() {
-    return gulp.src(config.source_images_path)
-        .pipe(cache(imagemin({progressive: true, interlaced: true})))
-        .on('error', console.log)
+
+var resizeImageTasks = [];
+
+['125x125', '1024x1024','300x300', '270x190'].forEach(function(size) {
+    var sizes  = size.split('x');
+    var width  = sizes[0];
+    var height = sizes[1];
+    var watemarkResize = '221x72';
+
+    if (size === '1024x1024') {
+        size = 'pictures';
+    }
+
+    if (width <= 250) {
+        watemarkResize = (width * 0.7) + 'x' + (width * 0.7);
+    }
+
+    var resizeImageTask = 'resize_' + size;
+
+    gulp.task(resizeImageTask, function() {
+        return gulp.src(config.source_images_path + "/*/**/*.{jpg,png}", { base: config.source_images_path })
+            .pipe(changed(config.images_path + '/' + size + '/', {extension: '.jpg'}))
+            .pipe(debug())
+            .pipe(parallel(
+                imageResize({
+                    width:  width,
+                    height: height,
+                    upscale: true,
+                    format: 'jpg',
+                    noProfile: true
+                }),
+                os.cpus().length)
+            )
+            .pipe(watermark({
+                image: "watermark.png",
+                resize: watemarkResize,
+                gravity: 'Center'
+            }))
+            .pipe(gulp.dest(config.images_path + '/' + size + '/'))
+    });
+
+    resizeImageTasks.push(resizeImageTask);
+});
+
+
+gulp.task('resize_images', resizeImageTasks);
+
+gulp.task('generate_webp', function() {
+    return gulp.src(config.images_path + "/*/**/*.{jpg,png}", { base: config.images_path })
+        .pipe(changed(config.images_path, {extension: '.webp'}))
+        .pipe(responsive({
+            '*/*/**/*.jpg': {
+                withoutEnlargement: true
+            }
+        }, {
+            // global quality for all images
+            quality: 50,
+            format: 'webp',
+            errorOnUnusedImage: false
+        }))
+        .pipe(rename({
+            extname: ".webp"
+        }))
         .pipe(gulp.dest(config.images_path))
-        .pipe(reload({ stream: true }))
-    ;
 });
 
-// Copy all static images
-gulp.task('imagess', ['clean'], function() {
-  return gulp.src(config.source_images_path)
-    // Pass in options to the task
-    .pipe(imagemin({optimizationLevel: 5}))
-    .pipe(gulp.dest(config.images_path+'/'));
+gulp.task('recompress', function() {
+    return gulp.src(config.source_images_path + "/*/**/*.{jpg,png}", { base: config.source_images_path })
+        .pipe(changed(config.images_path + '/pictures/', {extension: '.jpg'}))
+        .pipe(debug())
+        .pipe(
+            parallel(imageResize({
+                noProfile: true
+            }),
+            os.cpus().length)
+        )
+        .pipe(gulp.dest(config.source_images_path))
 });
 
-gulp.task('images:watch', function() {
-    return gulp.watch(config.source_images_path + "/*/**/*.{jpg,png}", ['generate']).on('change', function(event) {
-        console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
+gulp.task('default', function(done) {
+    runSequence('generate_webp', function () {
+    //runSequence('recompress', 'resize_images', 'generate_webp', function () {
+        console.log('Finished');
+        done();
     });
 });
-
-    //gulp.src([config.images_path + "/themes/*.png", config.images_path + "/design2016/*.png"], {base: "./"})
-    //.pipe(debug())
-    //.pipe(imageResize({ format: 'webp' }))
-    //.pipe(gulp.dest("./"))
-    //.pipe(imageResize({ format: 'jpg' }))
-    //.pipe(gulp.dest("./"));
-    
-gulp.task("generate", function () {
-    gulp.src(config.source_images_path + "/*/**/*.{jpg,png}", { base: config.source_images_path })
-    .pipe(changed(config.images_path + "/pictures"))
-    .pipe(debug())//.pipe(changed(config.images_path + "/270x190/"))
-    .pipe(imageResize({ width : 1024, format: 'webp' }))
-    .pipe(watermark({
-        image: "watermark.png",
-        resize: '221x72',
-        gravity: 'Center'
-    }))
-    .pipe(gulp.dest(config.images_path + "/pictures"))
-    .pipe(debug())
-    .pipe(imageResize({ format: 'jpeg' }))
-    .pipe(gulp.dest(config.images_path + "/pictures"))
-    .pipe(changed(config.images_path + "/300x300/"))
-    .pipe(imageResize({ width : 300, height: 300, gravity: 'Center', crop: true, format: 'webp', upscale: true }))
-    .pipe(gulp.dest(config.images_path+'/300x300'))
-    .pipe(debug())
-    .pipe(imageResize({ format: 'jpeg' }))
-    .pipe(gulp.dest(config.images_path+'/300x300'))
-    .pipe(imageResize({ width : 270, height: 190, gravity: 'Center', crop: true, format: 'webp', upscale: true }))
-    .pipe(gulp.dest(config.images_path+'/270x190'))
-    .pipe(debug())
-    .pipe(imageResize({ format: 'jpeg' }))
-    .pipe(gulp.dest(config.images_path+'/270x190'))
-    .pipe(imageResize({ width : 125, height: 125, gravity: 'Center', crop: true, format: 'webp', upscale: true }))
-    .pipe(gulp.dest(config.images_path+'/125x125'))
-    .pipe(debug())
-    .pipe(imageResize({ format: 'jpeg' }))
-    .pipe(gulp.dest(config.images_path+'/125x125'))
-});
-
-gulp.task('generate:watch', function() {
-    gulp.watch(config.source_images_path + "/*/**/*", function(event) {
-        console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
-        gulp.run('generate');
-    });
-});
-
-gulp.task('images_convert_minify', function() {
-    return gulp.src(config.images_path+'/**/*')
-        .pipe(cache(imagemin({progressive: true, interlaced: true, optimizationLevel: 7})))
-        .on('error', console.log)
-        .pipe(gulp.dest(config.images_path))
-        .pipe(reload({ stream: true }))
-    ;
-});
-//
-// Main Tasks
-
-// Default
-gulp.task('default', ['generate']);
