@@ -1,5 +1,7 @@
 FROM node:8-alpine
 
+MAINTAINER github-gulp-img-resize@exploit.cz
+
 RUN apk add --update \
   --repository http://dl-3.alpinelinux.org/alpine/edge/testing \
   vips-dev fftw-dev libwebp \
