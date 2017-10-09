@@ -39,7 +39,7 @@ var resizeImageTasks = [];
         gulp.src(config.source_images_path + "/*/**/*.{jpg,png}", { base: config.source_images_path })
             .pipe(changed(config.images_path + '/' + size + '/', {extension: '.jpg'}))
             .pipe(responsive({
-                '*': [
+                '**/*.{jpg,png}': [
                     // {
                     //     withoutEnlargement: false,
                     //     width:  width,
@@ -78,7 +78,7 @@ var resizeImageTasks = [];
         return gulp.src(config.source_images_path + "/*/**/*.{jpg,png}", { base: config.source_images_path })
             .pipe(changed(config.images_path + '/' + size + '/', {extension: '.jpg'}))
             .pipe(responsive({
-                '*': [
+                '**/*.{jpg,png}': [
                     // {
                     //     withoutEnlargement: false,
                     //     width:  width,
