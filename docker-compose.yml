@@ -4,6 +4,7 @@ services:
     node:
         build: .
         volumes:
+          - ../recipe-pictures-old/unprocessed/:/var/data/unprocessed
           - ../recipe-pictures-old/generated/:/var/data/generated
           - ../recipe-pictures-old/original/:/var/data/original
           - ../recipe-pictures-old/watermark.png:/var/data/watermark.png

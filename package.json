@@ -1,10 +1,10 @@
 {
   "dependencies": {
     "gulp": "^3.9.1",
-    "gulp-changed": "^3.1.0",
     "gulp-debug": "^3.1.0",
     "gulp-watermark": "^0.0.1",
     "run-sequence": "^2.2.0",
-    "gulp-responsive": "^2.8.0"
+    "gulp-responsive": "^2.8.0",
+    "gulp-rimraf": "^0.2.1"
   }
 }
